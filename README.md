@@ -1,22 +1,25 @@
-# Erudix
+# Erudix Web
 
-MVP mobile-first d’apprentissage éditorial sur l’Histoire, construit avec Expo, React Native, TypeScript et Expo Router.
+Application web responsive mobile-first construite avec Vite, React, TypeScript et React Router.
 
-## Arborescence principale
+## Arborescence
 
-- `app/` : routes Expo Router pour onboarding, accueil, session et profil.
-- `components/` : composants UI réutilisables comme les chips, boutons, sélection de durée et layouts.
-- `contexts/` : état global des préférences utilisateur.
-- `hooks/` : logique de chargement/comportement local.
-- `services/` : persistance locale, mock recommendation engine, historique et futur client Supabase.
-- `types/` : contrats TypeScript partagés.
-- `theme/` : tokens de design system (couleurs, spacing, radius).
+- `src/pages/` : Welcome, onboarding, Home, Session, History et Profile.
+- `src/components/` : composants UI partagés (Shell, Button, Chip).
+- `src/context/` : état global des préférences utilisateur.
+- `src/services/` : localStorage et moteur de recommandation mocké.
+- `src/types/` : modèles `UserPreferences`, `LearningResource` et `LearningSession`.
+- `src/styles/` : design system CSS responsive mobile-first.
 
-## Démarrage rapide
+La future logique IA sera isolée dans `src/services/recommendation.ts`, qui pourra appeler une API backend sans modifier les pages.
+
+## Lancer localement
 
 ```bash
 npm install
-npx expo start
+npm run dev
 ```
 
-Le MVP fonctionne en local via AsyncStorage. Pour préparer Supabase, ajoutez `EXPO_PUBLIC_SUPABASE_URL` et `EXPO_PUBLIC_SUPABASE_ANON_KEY` dans votre environnement.
+Puis ouvrir l’URL affichée par Vite, généralement `http://localhost:5173`.
+
+Le MVP utilise `localStorage`. Supabase pourra remplacer ce service pour l’authentification, les préférences et l’historique.

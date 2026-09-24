@@ -1,0 +1,2 @@
+import { Shell } from '../components/ui'; import { storage } from '../services/storage';
+export function History(){const items=storage.getHistory();return <Shell><section className="content"><p className="eyebrow">VOTRE PARCOURS</p><h1>Historique</h1>{items.length?items.map(s=><article className="history-item" key={s.id}><h2>{s.title}</h2><p>{s.estimatedDuration} min · {new Date(s.createdAt).toLocaleDateString('fr-FR')}</p></article>):<p className="lead">Vos sessions terminées apparaîtront ici.</p>}</section></Shell>}
