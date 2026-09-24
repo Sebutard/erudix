@@ -1,4 +1,125 @@
-import { useMemo, useState } from 'react'; import { useNavigate, useParams } from 'react-router-dom'; import { Button, Chip, Shell } from '../components/ui'; import { empty, usePreferences } from '../context/PreferencesContext';
-const data={periods:{title:'Quelles époques vous attirent ?',description:'Choisissez plusieurs périodes.',items:['Antiquité','Moyen Âge','Renaissance','XVIIe siècle','XVIIIe siècle','XIXe siècle','Première moitié du XXe siècle','Deuxième moitié du XXe siècle','XXIe siècle'],key:'historicalPeriods'},civilizations:{title:'Quels mondes voulez-vous explorer ?',description:'Sélectionnez les sociétés et civilisations qui vous intéressent.',items:['Empire romain','Grèce antique','Égypte ancienne','Empire ottoman','Civilisations précolombiennes','Chine impériale','Japon','Monde arabe','Europe médiévale','URSS','États-Unis','Amérique latine'],key:'civilizations'},personalities:{title:'Qui aimeriez-vous mieux connaître ?',description:'Recherchez ou choisissez des personnalités.',items:['Jules César','Cléopâtre','Napoléon','Simón Bolívar','Charles de Gaulle','Winston Churchill','Nelson Mandela','Marie Curie'],key:'personalities'},geography:{title:'Où l’Histoire vous emmène-t-elle ?',description:'Choisissez des régions ou des pays.',items:['Europe','Afrique','Amérique du Nord','Amérique latine','Asie','Moyen-Orient','Océanie','France','États-Unis','Russie','Chine','Égypte','Israël / Palestine','Inde'],key:'regions'}} as const;
-const steps=['periods','civilizations','personalities','geography','duration'];
-export function Onboarding(){const {step='periods'}=useParams();const nav=useNavigate();const {preferences,update}=usePreferences();const p=preferences||empty;const idx=steps.indexOf(step);const [search,setSearch]=useState(''); const config=step==='duration'?null:data[step as keyof typeof data]; const selected=config?(config.key==='regions'?[...p.regions,...p.countries]:p[config.key]):[]; const filtered=config?.items.filter(x=>x.toLowerCase().includes(search.toLowerCase()))||[]; const toggle=(item:string)=>{if(!config)return; const key=config.key; const current=key==='regions'?[...p.regions,...p.countries]:p[key]; update({...p,[key]:current.includes(item)?current.filter(x=>x!==item):[...current,item]});}; const next=()=>nav(idx===steps.length-1?'/home':`/onboarding/${steps[idx+1]}`); return <Shell><section className="onboarding"><p className="eyebrow">{String(idx+1).padStart(2,'0')} / 05</p><h1>{config?.title||'Combien de temps avez-vous généralement ?'}</h1><p className="lead">{config?.description||'Votre durée préférée guide la composition de chaque session.'}</p>{config&&<>{(step==='personalities'||step==='geography')&&<input className="input" placeholder="Rechercher..." value={search} onChange={e=>setSearch(e.target.value)}/>}<div className="chips">{filtered.map(item=><Chip key={item} selected={selected.includes(item)} onClick={()=>toggle(item)}>{item}</Chip>)}</div></>}{step==='duration'&&<div className="chips">{[5,10,15,20,30].map(n=><Chip key={n} selected={p.preferredSessionDuration===n} onClick={()=>update({...p,preferredSessionDuration:n})}>{n} min</Chip>)}</div>}<Button onClick={next}>{idx===steps.length-1?'Découvrir Erudix':'Continuer'}</Button></section></Shell>}
+import { useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Button, Chip, Shell } from '../components/ui';
+import { emptyPreferences, usePreferences } from '../context/PreferencesContext';
+import type { StepId } from '../types';
+
+const steps: StepId[] = ['periods', 'civilizations', 'personalities', 'geography', 'duration'];
+
+const configByStep = {
+  periods: {
+    title: 'Quelles époques vous attirent ?',
+    description: 'Choisissez plusieurs périodes.',
+    items: ['Antiquité', 'Moyen Âge', 'Renaissance', 'XVIIe siècle', 'XVIIIe siècle', 'XIXe siècle', 'Première moitié du XXe siècle', 'Deuxième moitié du XXe siècle', 'XXIe siècle'],
+    key: 'historicalPeriods',
+  },
+  civilizations: {
+    title: 'Quels mondes voulez-vous explorer ?',
+    description: 'Sélectionnez les sociétés et civilisations qui vous intéressent.',
+    items: ['Empire romain', 'Grèce antique', 'Égypte ancienne', 'Empire ottoman', 'Civilisations précolombiennes', 'Chine impériale', 'Japon', 'Monde arabe', 'Europe médiévale', 'URSS', 'États-Unis', 'Amérique latine'],
+    key: 'civilizations',
+  },
+  personalities: {
+    title: 'Qui aimeriez-vous mieux connaître ?',
+    description: 'Recherchez ou choisissez quelques personnalités.',
+    items: ['Jules César', 'Cléopâtre', 'Napoléon', 'Simón Bolívar', 'Charles de Gaulle', 'Winston Churchill', 'Nelson Mandela', 'Marie Curie'],
+    key: 'personalities',
+  },
+  geography: {
+    title: 'Où l’Histoire vous emmène-t-elle ?',
+    description: 'Choisissez des régions ou des pays pour donner le contexte géographique.',
+    items: ['Europe', 'Afrique', 'Amérique du Nord', 'Amérique latine', 'Asie', 'Moyen-Orient', 'Océanie', 'France', 'États-Unis', 'Russie', 'Chine', 'Égypte', 'Israël / Palestine', 'Inde'],
+    key: 'regions',
+  },
+} as const;
+
+export function Onboarding() {
+  const { step = 'periods' } = useParams<{ step: StepId }>();
+  const navigate = useNavigate();
+  const { preferences, update } = usePreferences();
+  const current = preferences ?? emptyPreferences;
+  const index = steps.indexOf(step);
+  const [search, setSearch] = useState('');
+
+  const currentConfig = step === 'duration' ? null : configByStep[step];
+
+  const selectedItems = currentConfig
+    ? current[currentConfig.key as keyof UserPreferences as 'historicalPeriods' | 'civilizations' | 'personalities' | 'regions' | 'countries']
+    : [];
+
+  const filteredItems = currentConfig
+    ? currentConfig.items.filter((item) => item.toLowerCase().includes(search.toLowerCase()))
+    : [];
+
+  const toggleItem = (item: string) => {
+    if (!currentConfig) return;
+
+    const key = currentConfig.key as keyof UserPreferences;
+    const currentValues = current[key] as string[];
+    const nextValues = currentValues.includes(item)
+      ? currentValues.filter((value) => value !== item)
+      : [...currentValues, item];
+
+    update({ ...current, [key]: nextValues });
+  };
+
+  const goNext = () => {
+    const nextStep = steps[index + 1];
+    if (nextStep) {
+      navigate(`/onboarding/${nextStep}`);
+      return;
+    }
+    navigate('/home');
+  };
+
+  return (
+    <Shell>
+      <section className="onboarding">
+        <p className="eyebrow">{String(index + 1).padStart(2, '0')} / 05</p>
+
+        {step === 'duration' ? (
+          <>
+            <h1>Combien de temps avez-vous généralement ?</h1>
+            <p className="lead">Votre durée préférée guide la composition de chaque session.</p>
+            <div className="chips">
+              {[5, 10, 15, 20, 30].map((value) => (
+                <Chip
+                  key={value}
+                  selected={current.preferredSessionDuration === value}
+                  onClick={() => update({ ...current, preferredSessionDuration: value })}
+                >
+                  {value} min
+                </Chip>
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <h1>{currentConfig.title}</h1>
+            <p className="lead">{currentConfig.description}</p>
+
+            {(step === 'personalities' || step === 'geography') && (
+              <input
+                className="input"
+                type="text"
+                placeholder="Rechercher..."
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+            )}
+
+            <div className="chips">
+              {filteredItems.map((item) => (
+                <Chip key={item} selected={selectedItems.includes(item)} onClick={() => toggleItem(item)}>
+                  {item}
+                </Chip>
+              ))}
+            </div>
+          </>
+        )}
+
+        <Button onClick={goNext}>{step === 'duration' ? 'Découvrir Erudix' : 'Continuer'}</Button>
+      </section>
+    </Shell>
+  );
+}

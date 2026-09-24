@@ -1,9 +1,32 @@
 import type { LearningSession, UserPreferences } from '../types';
-const P='erudix_preferences', H='erudix_history', S='erudix_session';
-export const storage={
- getPreferences:():UserPreferences|null=>JSON.parse(localStorage.getItem(P)||'null'),
- savePreferences:(p:UserPreferences)=>localStorage.setItem(P,JSON.stringify(p)),
- getHistory:():LearningSession[]=>JSON.parse(localStorage.getItem(H)||'[]'),
- saveSession:(s:LearningSession)=>{localStorage.setItem(S,JSON.stringify(s));localStorage.setItem(H,JSON.stringify([s,...storage.getHistory().filter(x=>x.id!==s.id)].slice(0,20)));},
- getSession:():LearningSession|null=>JSON.parse(localStorage.getItem(S)||'null')
+
+const PREFERENCES_KEY = 'erudix_preferences';
+const HISTORY_KEY = 'erudix_history';
+const SESSION_KEY = 'erudix_session';
+
+export const storage = {
+  getPreferences(): UserPreferences | null {
+    const raw = localStorage.getItem(PREFERENCES_KEY);
+    return raw ? (JSON.parse(raw) as UserPreferences) : null;
+  },
+
+  savePreferences(value: UserPreferences) {
+    localStorage.setItem(PREFERENCES_KEY, JSON.stringify(value));
+  },
+
+  getHistory(): LearningSession[] {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    return raw ? (JSON.parse(raw) as LearningSession[]) : [];
+  },
+
+  saveSession(value: LearningSession) {
+    const nextHistory = [value, ...this.getHistory().filter((item) => item.id !== value.id)].slice(0, 20);
+    localStorage.setItem(SESSION_KEY, JSON.stringify(value));
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(nextHistory));
+  },
+
+  getSession(): LearningSession | null {
+    const raw = localStorage.getItem(SESSION_KEY);
+    return raw ? (JSON.parse(raw) as LearningSession) : null;
+  },
 };
